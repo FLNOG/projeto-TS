@@ -1,7 +1,9 @@
 package com.testesoftware.cadastro.controller;
 
+import com.testesoftware.cadastro.exception.ProductNotFound;
 import com.testesoftware.cadastro.model.Produto;
 import com.testesoftware.cadastro.service.ProdutoService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,23 +29,31 @@ public class ProdutoController {
     @GetMapping("/{id}")
     public ResponseEntity<Produto> buscarPorId(@PathVariable int id) {
         Optional<Produto> produto = produtoService.buscarPorId(id);
-        return produto.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return produto.map(ResponseEntity::ok)
+                .orElseThrow(() -> new ProductNotFound(id));
     }
 
     @PostMapping
     public ResponseEntity<Produto> criarProduto(@RequestBody Produto produto) {
         Produto novoProduto = produtoService.criarProduto(produto);
-        return ResponseEntity.ok(novoProduto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoProduto);
     }
 
-    @PutMapping
-    public ResponseEntity<Produto> atualizarProduto(@RequestBody Produto produto) {
+    @PutMapping("/{id}")
+    public ResponseEntity<Produto> atualizarProduto(@PathVariable int id, @RequestBody Produto produto) {
+        if (produtoService.buscarPorId(id).isEmpty()) {
+            throw new ProductNotFound(id);
+        }
+        produto.setId(id);
         Produto produtoAtualizado = produtoService.atualizarProduto(produto);
         return ResponseEntity.ok(produtoAtualizado);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletarProduto(@PathVariable int id) {
+        if (produtoService.buscarPorId(id).isEmpty()) {
+            throw new ProductNotFound(id);
+        }
         produtoService.deletarProduto(id);
         return ResponseEntity.noContent().build();
     }
