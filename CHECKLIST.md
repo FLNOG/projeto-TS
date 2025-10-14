@@ -1,7 +1,5 @@
 # Checklist – Projeto Cadastro de Usuários e Produtos
 
-## Kanban
-
 ### To Do
 - [ ] Testes unitários PessoaService (`JUnit 5 + Mockito`)
 - [ ] Testes unitários ProdutoService (`JUnit 5 + Mockito`)
