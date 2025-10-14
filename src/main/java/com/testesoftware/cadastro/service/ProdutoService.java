@@ -23,7 +23,7 @@ public class ProdutoService {
         return produtoRepository.findAll();
     }
 
-    public Optional<Produto> buscarPorId(Integer id) {
+    public Optional<Produto> buscarPorId(int id) {
         return produtoRepository.findById(id);
     }
 
@@ -31,7 +31,7 @@ public class ProdutoService {
         return produtoRepository.save(produto);
     }
 
-    public void deletarProduto(Integer id) {
+    public void deletarProduto(int id) {
         produtoRepository.deleteById(id);
     }
 }

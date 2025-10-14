@@ -15,14 +15,14 @@ public class PessoaService {
         this.pessoaRepository = pessoaRepository;
     }
 
-    public Pessoa criarPessoa(Pessoa pessoa) {
+    public Pessoa cadastraPessoa(Pessoa pessoa) {
         if (pessoaRepository.existsByEmail(pessoa.getEmail())) {
             throw new IllegalArgumentException("Email já cadastrado");
         }
         return pessoaRepository.save(pessoa);
     }
 
-    public List<Pessoa> listarUsuarios() {
+    public List<Pessoa> listarPessoas() {
         return pessoaRepository.findAll();
     }
 
@@ -30,11 +30,11 @@ public class PessoaService {
         return pessoaRepository.findById(id);
     }
 
-    public Pessoa atualizarUsuario(Pessoa pessoa) {
+    public Pessoa atualizarPessoa(Pessoa pessoa) {
         return pessoaRepository.save(pessoa);
     }
 
-    public void deletarUsuario(int id) {
+    public void deletarPessoa(int id) {
         pessoaRepository.deleteById(id);
     }
 }
