@@ -20,19 +20,7 @@ public class PessoaController {
         this.pessoaService = pessoaService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<Pessoa>> listarPessoas() {
-        return ResponseEntity.ok(pessoaService.listarPessoas());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Pessoa> buscarPorId(@PathVariable int id) {
-        Optional<Pessoa> pessoa = pessoaService.buscarPorId(id);
-        return pessoa.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @PostMapping
+    @PostMapping("/cadastrar")
     public ResponseEntity<Pessoa> cadastrarPessoa(@RequestBody Pessoa pessoa) {
         try {
             Pessoa novaPessoa = pessoaService.cadastraPessoa(pessoa);
@@ -42,12 +30,26 @@ public class PessoaController {
         }
     }
 
-    @PutMapping
-    public ResponseEntity<Pessoa> atualizarPessoa(@RequestBody Pessoa pessoa) {
-        return ResponseEntity.ok(pessoaService.atualizarPessoa(pessoa));
+    @GetMapping("/listar")
+    public ResponseEntity<List<Pessoa>> listarPessoas() {
+        return ResponseEntity.ok(pessoaService.listarPessoas());
     }
 
-    @DeleteMapping("/{id}")
+    @GetMapping("/buscar/{id}")
+    public ResponseEntity<Pessoa> buscarPorId(@PathVariable int id) {
+        Optional<Pessoa> pessoa = pessoaService.buscarPorId(id);
+        return pessoa.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/atualizar/{id}")
+    public ResponseEntity<Pessoa> atualizarPessoa(@PathVariable int id, @RequestBody Pessoa pessoa) {
+        pessoa.setId(id);
+        Pessoa pessoaAtualizada = pessoaService.atualizarPessoa(pessoa);
+        return ResponseEntity.ok(pessoaAtualizada);
+    }
+
+    @DeleteMapping("/deletar/{id}")
     public ResponseEntity<Void> deletarPessoa(@PathVariable int id) {
         pessoaService.deletarPessoa(id);
         return ResponseEntity.noContent().build();

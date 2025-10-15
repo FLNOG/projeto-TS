@@ -15,7 +15,7 @@ public class ProdutoService {
         this.produtoRepository = produtoRepository;
     }
 
-    public Produto criarProduto(Produto produto) {
+    public Produto cadastrarProduto(Produto produto) {
         return produtoRepository.save(produto);
     }
 

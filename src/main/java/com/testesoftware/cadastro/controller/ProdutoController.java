@@ -20,26 +20,26 @@ public class ProdutoController {
         this.produtoService = produtoService;
     }
 
-    @GetMapping
+    @PostMapping("/cadastrar")
+    public ResponseEntity<Produto> cadastrarProduto(@RequestBody Produto produto) {
+        Produto novoProduto = produtoService.cadastrarProduto(produto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(novoProduto);
+    }
+
+    @GetMapping("/listar")
     public ResponseEntity<List<Produto>> listarProdutos() {
         List<Produto> produtos = produtoService.listarProdutos();
         return ResponseEntity.ok(produtos);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/buscar/{id}")
     public ResponseEntity<Produto> buscarPorId(@PathVariable int id) {
         Optional<Produto> produto = produtoService.buscarPorId(id);
         return produto.map(ResponseEntity::ok)
                 .orElseThrow(() -> new ProductNotFound(id));
     }
 
-    @PostMapping
-    public ResponseEntity<Produto> criarProduto(@RequestBody Produto produto) {
-        Produto novoProduto = produtoService.criarProduto(produto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(novoProduto);
-    }
-
-    @PutMapping("/{id}")
+    @PutMapping("/atualizar/{id}")
     public ResponseEntity<Produto> atualizarProduto(@PathVariable int id, @RequestBody Produto produto) {
         if (produtoService.buscarPorId(id).isEmpty()) {
             throw new ProductNotFound(id);
@@ -49,7 +49,7 @@ public class ProdutoController {
         return ResponseEntity.ok(produtoAtualizado);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/deletar/{id}")
     public ResponseEntity<Void> deletarProduto(@PathVariable int id) {
         if (produtoService.buscarPorId(id).isEmpty()) {
             throw new ProductNotFound(id);
