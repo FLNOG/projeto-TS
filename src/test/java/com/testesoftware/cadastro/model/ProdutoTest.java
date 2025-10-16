@@ -12,4 +12,14 @@ public class ProdutoTest {
         assertEquals("Guitarra Yamaha", produto.getNome());
         assertEquals(1599.99, produto.getPreco());
     }
+
+    @Test
+    public void testGetSet() {
+        Produto produto = new Produto();
+        produto.setNome("Guitarra Yamaha");
+        produto.setPreco(1599.99);
+
+        assertEquals("Guitarra Yamaha", produto.getNome());
+        assertEquals(1599.99, produto.getPreco());
+    }
 }

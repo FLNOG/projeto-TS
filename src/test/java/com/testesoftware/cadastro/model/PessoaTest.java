@@ -13,4 +13,16 @@ public class PessoaTest {
         assertEquals("felipe@email.com", pessoa.getEmail());
         assertEquals("1234567890", pessoa.getSenha());
     }
+
+    @Test
+    public void testGetSet(){
+        Pessoa pessoa = new Pessoa();
+        pessoa.setNome("Felipe Nogueira");
+        pessoa.setEmail("felipe@email.com");
+        pessoa.setSenha("1234567890");
+
+        assertEquals("Felipe Nogueira", pessoa.getNome());
+        assertEquals("felipe@email.com",  pessoa.getEmail());
+        assertEquals("1234567890", pessoa.getSenha());
+    }
 }
