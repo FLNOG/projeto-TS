@@ -12,12 +12,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Pessoa {
 
-    public Pessoa(String nome, String email, String senha) {
-        this.nome = nome;
-        this.email = email;
-        this.senha = senha;
-    }
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -30,4 +24,32 @@ public class Pessoa {
 
     @Column(nullable = false)
     private String senha;
+
+    @Column(length = 9, nullable = false)
+    private String cep;
+
+    @Column
+    private String logradouro;
+
+    @Column
+    private String bairro;
+
+    @Column
+    private String localidade;
+
+    @Column(length = 2)
+    private String uf;
+
+    public Pessoa(String nome, String email, String senha) {
+        this.nome = nome;
+        this.email = email;
+        this.senha = senha;
+    }
+
+    public Pessoa(String nome, String email, String senha, String cep) {
+        this.nome = nome;
+        this.email = email;
+        this.senha = senha;
+        this.cep = cep;
+    }
 }
