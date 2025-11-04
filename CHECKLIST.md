@@ -1,8 +1,8 @@
 # Checklist – Projeto Cadastro de Usuários e Produtos
 
 ### To Do
-- [ ] Testes unitários PessoaService (`JUnit 5 + Mockito`)
-- [ ] Testes unitários ProdutoService (`JUnit 5 + Mockito`)
+- [x] Testes unitários PessoaService (`JUnit 5 + Mockito`)
+- [x] Testes unitários ProdutoService (`JUnit 5 + Mockito`)
 - [ ] Testes de integração (Testcontainers com PostgreSQL)
 - [ ] Testes de API REST (MockMvc ou RestAssured)
 - [ ] Testes de integração com API externa (VHS / VCR Java)
