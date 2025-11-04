@@ -4,6 +4,7 @@ import com.testesoftware.cadastro.model.ViaCEP;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import java.io.IOException;
@@ -14,12 +15,13 @@ import java.nio.file.Paths;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@TestPropertySource(properties = { "spring.jpa.hibernate.ddl-auto=create-drop" })
+@ActiveProfiles("test")
+//@TestPropertySource(properties = { "spring.jpa.hibernate.ddl-auto=create-drop" })
 class VCRViaCEPServiceTest {
 
     private VCRService vcrService;
     private VCRViaCEPService vcrViaCEPService;
-    
+
     @BeforeEach
     void setUp() {
         vcrService = new VCRService();
@@ -35,7 +37,7 @@ class VCRViaCEPServiceTest {
             Files.delete(cassettePath);
         }
 
-        ViaCEP recordedResponse = vcrViaCEPService.buscarEnderecoPorCEP("07124610", cassetteName, true);
+        ViaCEP recordedResponse = vcrViaCEPService.buscarEnderecoPorCEP("01001000", cassetteName, true);
 
         assertNotNull(recordedResponse);
         assertNotNull(recordedResponse);
@@ -45,7 +47,7 @@ class VCRViaCEPServiceTest {
 
         VCRRecording recording = vcrService.loadCassette(cassetteName);
         assertFalse(recording.getInteractions().isEmpty());
-        
+
         System.out.println("VCR Test: Successfully recorded interaction to cassette: " + cassetteName);
         System.out.println("Recorded " + recording.getInteractions().size() + " interactions");
     }

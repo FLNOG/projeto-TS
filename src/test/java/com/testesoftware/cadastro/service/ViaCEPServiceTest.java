@@ -3,13 +3,15 @@ package com.testesoftware.cadastro.service;
 import com.testesoftware.cadastro.model.ViaCEP;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.server.ResponseStatusException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-@TestPropertySource(properties = { "spring.jpa.hibernate.ddl-auto=create-drop" })
+@ActiveProfiles("test")
+//@TestPropertySource(properties = { "spring.jpa.hibernate.ddl-auto=create-drop" })
 class ViaCEPServiceTest {
 
     private ViaCEPService viaCEPService = new ViaCEPService();
