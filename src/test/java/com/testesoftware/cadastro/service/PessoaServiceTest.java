@@ -1,87 +1,88 @@
 package com.testesoftware.cadastro.service;
 
+import com.testesoftware.cadastro.BaseIntegrationTest;
 import com.testesoftware.cadastro.exception.EmailAlreadyExistsException;
 import com.testesoftware.cadastro.model.Pessoa;
 import com.testesoftware.cadastro.repository.PessoaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-@DisplayName("Testes Unitários - PessoaService")
-class PessoaServiceTest {
+@DisplayName("Testes de Integração - PessoaService com Testcontainers")
+class PessoaServiceTest extends BaseIntegrationTest {
 
-    @Mock
+    @Autowired
     private PessoaRepository pessoaRepository;
 
+    @Autowired
     private PessoaService pessoaService;
+
     private Pessoa pessoa;
 
     @BeforeEach
     void setUp() {
-        pessoaService = new PessoaService(pessoaRepository);
-        pessoa = new Pessoa("João Silva", "joao@email.com", "senha123");
+        pessoaRepository.deleteAll(); // Limpa dados antes de cada teste
+        pessoa = new Pessoa("João Silva", "joao@email.com", "senha123", "01001000");
     }
 
     @Test
-    @DisplayName("Deve cadastrar pessoa com sucesso")
+    @DisplayName("Deve cadastrar pessoa com sucesso no banco de dados")
+    @Transactional
     void deveCadastrarPessoaComSucesso() {
-        // Arrange
-        when(pessoaRepository.existsByEmail(pessoa.getEmail())).thenReturn(false);
-        when(pessoaRepository.save(any(Pessoa.class))).thenAnswer(invocation -> {
-            Pessoa p = invocation.getArgument(0);
-            p.setId(1); // Simula ID gerado pelo banco
-            return p;
-        });
-
         // Act
         Pessoa pessoaSalva = pessoaService.cadastraPessoa(pessoa);
 
         // Assert
         assertNotNull(pessoaSalva);
+        assertTrue(pessoaSalva.getId() > 0);
         assertEquals("João Silva", pessoaSalva.getNome());
         assertEquals("joao@email.com", pessoaSalva.getEmail());
-        assertEquals(1, pessoaSalva.getId());
-        verify(pessoaRepository, times(1)).existsByEmail(pessoa.getEmail());
-        verify(pessoaRepository, times(1)).save(any(Pessoa.class));
+        assertEquals("01001000", pessoaSalva.getCep());
+
+        // Verifica se foi persistido no banco
+        Optional<Pessoa> pessoaNoBanco = pessoaRepository.findById(pessoaSalva.getId());
+        assertTrue(pessoaNoBanco.isPresent());
+        assertEquals("João Silva", pessoaNoBanco.get().getNome());
     }
 
     @Test
-    @DisplayName("Deve lançar exceção quando email já existe")
+    @DisplayName("Deve lançar exceção quando email já existe no banco de dados")
+    @Transactional
     void deveLancarExcecaoQuandoEmailJaExiste() {
-        // Arrange
-        when(pessoaRepository.existsByEmail(pessoa.getEmail())).thenReturn(true);
+        // Arrange - Salva primeira pessoa
+        pessoaService.cadastraPessoa(pessoa);
+        Pessoa pessoaComEmailDuplicado = new Pessoa("Outro Nome", "joao@email.com", "senha789", "02020000");
 
         // Act & Assert
         EmailAlreadyExistsException exception = assertThrows(EmailAlreadyExistsException.class, () -> {
-            pessoaService.cadastraPessoa(pessoa);
+            pessoaService.cadastraPessoa(pessoaComEmailDuplicado);
         });
 
         assertEquals("E-mail já cadastrado: joao@email.com", exception.getMessage());
-        verify(pessoaRepository, times(1)).existsByEmail(pessoa.getEmail());
-        verify(pessoaRepository, never()).save(any(Pessoa.class));
+
+        // Verifica que apenas uma pessoa foi salva
+        assertEquals(1, pessoaRepository.count());
+        List<Pessoa> pessoas = pessoaRepository.findAll();
+        assertEquals(1, pessoas.size());
+        assertEquals("joao@email.com", pessoas.get(0).getEmail());
     }
 
     @Test
-    @DisplayName("Deve listar todas as pessoas")
+    @DisplayName("Deve listar todas as pessoas do banco de dados")
+    @Transactional
     void deveListarTodasAsPessoas() {
         // Arrange
-        List<Pessoa> pessoas = Arrays.asList(
-            new Pessoa("Maria", "maria@email.com", "senha1"),
-            new Pessoa("Pedro", "pedro@email.com", "senha2")
-        );
-        when(pessoaRepository.findAll()).thenReturn(pessoas);
+        Pessoa pessoa1 = new Pessoa("Maria", "maria@email.com", "senha1", "01001000");
+        Pessoa pessoa2 = new Pessoa("Pedro", "pedro@email.com", "senha2", "01310100");
+        pessoaService.cadastraPessoa(pessoa1);
+        pessoaService.cadastraPessoa(pessoa2);
 
         // Act
         List<Pessoa> resultado = pessoaService.listarPessoas();
@@ -89,113 +90,121 @@ class PessoaServiceTest {
         // Assert
         assertNotNull(resultado);
         assertEquals(2, resultado.size());
-        assertEquals("Maria", resultado.get(0).getNome());
-        assertEquals("Pedro", resultado.get(1).getNome());
-        verify(pessoaRepository, times(1)).findAll();
+        assertTrue(resultado.stream().anyMatch(p -> p.getEmail().equals("maria@email.com")));
+        assertTrue(resultado.stream().anyMatch(p -> p.getEmail().equals("pedro@email.com")));
     }
 
     @Test
-    @DisplayName("Deve buscar pessoa por ID quando existe")
+    @DisplayName("Deve buscar pessoa por ID quando existe no banco de dados")
+    @Transactional
     void deveBuscarPessoaPorIdQuandoExiste() {
         // Arrange
-        pessoa.setId(1);
-        when(pessoaRepository.findById(1)).thenReturn(Optional.of(pessoa));
+        Pessoa pessoaSalva = pessoaService.cadastraPessoa(pessoa);
+        int id = pessoaSalva.getId();
 
         // Act
-        Optional<Pessoa> resultado = pessoaService.buscarPorId(1);
+        Optional<Pessoa> resultado = pessoaService.buscarPorId(id);
 
         // Assert
         assertTrue(resultado.isPresent());
         assertEquals("João Silva", resultado.get().getNome());
         assertEquals("joao@email.com", resultado.get().getEmail());
-        verify(pessoaRepository, times(1)).findById(1);
+        assertEquals(id, resultado.get().getId());
     }
 
     @Test
-    @DisplayName("Deve retornar Optional vazio quando ID não existe")
+    @DisplayName("Deve retornar Optional vazio quando ID não existe no banco")
+    @Transactional
     void deveRetornarOptionalVazioQuandoIdNaoExiste() {
-        // Arrange
-        when(pessoaRepository.findById(999)).thenReturn(Optional.empty());
-
         // Act
-        Optional<Pessoa> resultado = pessoaService.buscarPorId(999);
+        Optional<Pessoa> resultado = pessoaService.buscarPorId(99999);
 
         // Assert
         assertTrue(resultado.isEmpty());
-        verify(pessoaRepository, times(1)).findById(999);
     }
 
     @Test
-    @DisplayName("Deve atualizar pessoa com sucesso")
+    @DisplayName("Deve atualizar pessoa no banco de dados")
+    @Transactional
     void deveAtualizarPessoaComSucesso() {
         // Arrange
-        pessoa.setId(1);
-        pessoa.setNome("João Silva Atualizado");
-        when(pessoaRepository.save(any(Pessoa.class))).thenReturn(pessoa);
+        Pessoa pessoaSalva = pessoaService.cadastraPessoa(pessoa);
+        pessoaSalva.setNome("João Silva Atualizado");
+        pessoaSalva.setCep("01310100");
 
         // Act
-        Pessoa pessoaAtualizada = pessoaService.atualizarPessoa(pessoa);
+        Pessoa pessoaAtualizada = pessoaService.atualizarPessoa(pessoaSalva);
 
         // Assert
         assertNotNull(pessoaAtualizada);
+        assertEquals(pessoaSalva.getId(), pessoaAtualizada.getId());
         assertEquals("João Silva Atualizado", pessoaAtualizada.getNome());
-        assertEquals(1, pessoaAtualizada.getId());
-        verify(pessoaRepository, times(1)).save(pessoa);
+        assertEquals("01310100", pessoaAtualizada.getCep());
+
+        // Verifica no banco
+        Optional<Pessoa> pessoaNoBanco = pessoaRepository.findById(pessoaAtualizada.getId());
+        assertTrue(pessoaNoBanco.isPresent());
+        assertEquals("João Silva Atualizado", pessoaNoBanco.get().getNome());
     }
 
     @Test
-    @DisplayName("Deve deletar pessoa com sucesso")
+    @DisplayName("Deve deletar pessoa do banco de dados")
+    @Transactional
     void deveDeletarPessoaComSucesso() {
         // Arrange
-        doNothing().when(pessoaRepository).deleteById(1);
+        Pessoa pessoaSalva = pessoaService.cadastraPessoa(pessoa);
+        int id = pessoaSalva.getId();
 
         // Act
         assertDoesNotThrow(() -> {
-            pessoaService.deletarPessoa(1);
+            pessoaService.deletarPessoa(id);
         });
 
         // Assert
-        verify(pessoaRepository, times(1)).deleteById(1);
+        Optional<Pessoa> pessoaDeletada = pessoaRepository.findById(id);
+        assertTrue(pessoaDeletada.isEmpty());
+        assertEquals(0, pessoaRepository.count());
     }
 
     @Test
-    @DisplayName("Deve cadastrar pessoa com CEP")
+    @DisplayName("Deve cadastrar pessoa com CEP e validar persistência")
+    @Transactional
     void deveCadastrarPessoaComCep() {
         // Arrange
         Pessoa pessoaComCep = new Pessoa("Ana", "ana@email.com", "senha", "01001000");
-        when(pessoaRepository.existsByEmail(pessoaComCep.getEmail())).thenReturn(false);
-        when(pessoaRepository.save(any(Pessoa.class))).thenAnswer(invocation -> {
-            Pessoa p = invocation.getArgument(0);
-            p.setId(2);
-            return p;
-        });
+        pessoaComCep.setLogradouro("Praça da Sé");
+        pessoaComCep.setBairro("Sé");
+        pessoaComCep.setLocalidade("São Paulo");
+        pessoaComCep.setUf("SP");
 
         // Act
         Pessoa pessoaSalva = pessoaService.cadastraPessoa(pessoaComCep);
 
         // Assert
         assertNotNull(pessoaSalva);
+        assertTrue(pessoaSalva.getId() > 0);
         assertEquals("Ana", pessoaSalva.getNome());
         assertEquals("01001000", pessoaSalva.getCep());
-        assertEquals(2, pessoaSalva.getId());
-        verify(pessoaRepository, times(1)).existsByEmail(pessoaComCep.getEmail());
-        verify(pessoaRepository, times(1)).save(any(Pessoa.class));
+        assertEquals("Praça da Sé", pessoaSalva.getLogradouro());
+        assertEquals("São Paulo", pessoaSalva.getLocalidade());
+        assertEquals("SP", pessoaSalva.getUf());
+
+        // Verifica no banco
+        Optional<Pessoa> pessoaNoBanco = pessoaRepository.findById(pessoaSalva.getId());
+        assertTrue(pessoaNoBanco.isPresent());
+        assertEquals("São Paulo", pessoaNoBanco.get().getLocalidade());
     }
 
     @Test
-    @DisplayName("Deve retornar lista vazia quando não há pessoas")
+    @DisplayName("Deve retornar lista vazia quando não há pessoas no banco")
+    @Transactional
     void deveRetornarListaVaziaQuandoNaoHaPessoas() {
-        // Arrange
-        when(pessoaRepository.findAll()).thenReturn(Arrays.asList());
-
         // Act
         List<Pessoa> resultado = pessoaService.listarPessoas();
 
         // Assert
         assertNotNull(resultado);
         assertTrue(resultado.isEmpty());
-        verify(pessoaRepository, times(1)).findAll();
+        assertEquals(0, pessoaRepository.count());
     }
 }
-
-
