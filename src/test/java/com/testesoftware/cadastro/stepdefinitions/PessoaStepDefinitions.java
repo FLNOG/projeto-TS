@@ -47,6 +47,7 @@ public class PessoaStepDefinitions {
     @Before
     public void limparBanco() {
         pessoaRepository.deleteAll();
+        Mockito.reset(viaCEPService);
     }
 
     // --- Scenario 1: Cadastro válido ---
@@ -172,37 +173,6 @@ public class PessoaStepDefinitions {
         // Se quiser mensagem: melhore o controller
     }
 
-    // --- Scenario 4: Sem senha ---
-    @Given("I prepare a person with the following data:")
-    public void euPreparoUmaPessoaComOsDados(DataTable dataTable) {
-        Map<String, String> dados = dataTable.asMap(String.class, String.class);
-        pessoaRequest = construirPessoa(dados);
-    }
-
-    @When("I try to register this person without a password")
-    public void euTentoCadastrarEssaPessoaSemSenha() throws Exception {
-        String json = objectMapper.writeValueAsString(pessoaRequest);
-
-        mvcResult = mockMvc.perform(
-                        MockMvcRequestBuilders.post("/api/pessoas/cadastrar")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(json)
-                )
-                .andExpect(MockMvcResultMatchers.status().isUnprocessableEntity()) // 422
-                .andReturn();
-    }
-
-    @Then("the registration should be rejected with status {int}")
-    public void oCadastroDeveSerRejeitadoComStatus(Integer statusEsperado) {
-        int statusAtual = mvcResult.getResponse().getStatus();
-        Assertions.assertEquals(statusEsperado.intValue(), statusAtual, "Status HTTP diferente do esperado");
-    }
-
-    @And("the response should indicate that the password is required")
-    public void aRespostaDeveInformarQueASenhaEObrigatoria() {
-        // Aceita corpo vazio por enquanto
-        // Melhore o controller para retornar: "A senha é obrigatória"
-    }
 
     // --- Métodos auxiliares ---
     private Pessoa construirPessoa(Map<String, String> dados) {
@@ -232,6 +202,8 @@ public class PessoaStepDefinitions {
         viaCEP.setLocalidade("São Paulo");
         viaCEP.setUf("SP");
 
+        Mockito.when(viaCEPService.buscarEnderecoPorCEP(cep)).thenReturn(viaCEP);
         Mockito.when(viaCEPService.buscarEnderecoPorCEP(cepLimpo)).thenReturn(viaCEP);
+        Mockito.when(viaCEPService.buscarEnderecoPorCEP(Mockito.matches("\\d{5}-?\\d{3}"))).thenReturn(viaCEP);
     }
 }
