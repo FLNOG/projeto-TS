@@ -1,5 +1,6 @@
 package com.testesoftware.cadastro.vcr;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.testesoftware.cadastro.model.ViaCEP;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -73,48 +74,11 @@ public class VCRViaCEPService {
     }
 
     private ViaCEP parseViaCEPResponse(String jsonResponse) {
-        ViaCEP response = new ViaCEP();
-
-        if (jsonResponse.contains("\"cep\"")) {
-            int start = jsonResponse.indexOf("\"cep\":\"") + 7;
-            int end = jsonResponse.indexOf("\"", start);
-            if (start > 6 && end > start) {
-                response.setCep(jsonResponse.substring(start, end));
-            }
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.readValue(jsonResponse, ViaCEP.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao converter JSON gravado", e);
         }
-
-        if (jsonResponse.contains("\"logradouro\"")) {
-            int start = jsonResponse.indexOf("\"logradouro\":\"") + 13;
-            int end = jsonResponse.indexOf("\"", start);
-            if (start > 12 && end > start) {
-                response.setLogradouro(jsonResponse.substring(start, end));
-            }
-        }
-
-        if (jsonResponse.contains("\"bairro\"")) {
-            int start = jsonResponse.indexOf("\"bairro\":\"") + 10;
-            int end = jsonResponse.indexOf("\"", start);
-            if (start > 9 && end > start) {
-                response.setBairro(jsonResponse.substring(start, end));
-            }
-        }
-
-        if (jsonResponse.contains("\"localidade\"")) {
-            int start = jsonResponse.indexOf("\"localidade\":\"") + 14;
-            int end = jsonResponse.indexOf("\"", start);
-            if (start > 13 && end > start) {
-                response.setLocalidade(jsonResponse.substring(start, end));
-            }
-        }
-
-        if (jsonResponse.contains("\"uf\"")) {
-            int start = jsonResponse.indexOf("\"uf\":\"") + 6;
-            int end = jsonResponse.indexOf("\"", start);
-            if (start > 5 && end > start) {
-                response.setUf(jsonResponse.substring(start, end));
-            }
-        }
-
-        return response;
     }
 }
