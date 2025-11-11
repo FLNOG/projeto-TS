@@ -1,7 +1,7 @@
-# Projeto Testes de Software — Cadastro de Usuários e Produtos
+# Projeto Testes de Software — Cadastro de Pessoas e Produtos
 Curso: Analise e Desenvolvimento de Sistemas - Turma: 4NC
 
-* Intergrantes:
+**Intergrantes:**
 * Felipe Nogueira Silva
 * Pedro Henrique Carneichuk Rosa 
 * Ranielly Evellyn Cunha
