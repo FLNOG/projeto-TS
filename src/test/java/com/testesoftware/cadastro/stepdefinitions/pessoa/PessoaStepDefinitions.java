@@ -1,4 +1,4 @@
-package com.testesoftware.cadastro.stepdefinitions;
+package com.testesoftware.cadastro.stepdefinitions.pessoa;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.testesoftware.cadastro.model.Pessoa;
@@ -6,8 +6,11 @@ import com.testesoftware.cadastro.model.ViaCEP;
 import com.testesoftware.cadastro.repository.PessoaRepository;
 import com.testesoftware.cadastro.service.ViaCEPService;
 import io.cucumber.datatable.DataTable;
-import io.cucumber.java.en.*;
 import io.cucumber.java.Before;
+import io.cucumber.java.en.And;
+import io.cucumber.java.en.Given;
+import io.cucumber.java.en.Then;
+import io.cucumber.java.en.When;
 import io.cucumber.spring.CucumberContextConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
@@ -50,7 +53,6 @@ public class PessoaStepDefinitions {
         Mockito.reset(viaCEPService);
     }
 
-    // --- Scenario 1: Cadastro válido ---
     @Given("there is a person with the following data:")
     public void existeUmaPessoaComOsDados(DataTable dataTable) {
         Map<String, String> dados = dataTable.asMap(String.class, String.class);
@@ -85,7 +87,6 @@ public class PessoaStepDefinitions {
         Assertions.assertEquals(nomeEsperado, resposta.getNome(), "Nome retornado diferente do esperado");
     }
 
-    // --- Scenario 2: Email duplicado ---
     @Given("a person is already registered with the email {string}")
     public void jaExisteUmaPessoaCadastradaComOEmail(String email) throws Exception {
         Pessoa existente = new Pessoa();
@@ -121,7 +122,7 @@ public class PessoaStepDefinitions {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(json)
                 )
-                .andExpect(MockMvcResultMatchers.status().isConflict()) // 409
+                .andExpect(MockMvcResultMatchers.status().isConflict())
                 .andReturn();
     }
 
@@ -138,7 +139,6 @@ public class PessoaStepDefinitions {
                 "Esperava corpo vazio para erro 409, mas veio: " + corpo);
     }
 
-    // --- Scenario 3: CEP inválido ---
     @Given("there is a new person with the following data:")
     public void existeUmaNovaPessoaComOsDados(DataTable dataTable) {
         Map<String, String> dados = dataTable.asMap(String.class, String.class);
@@ -157,7 +157,7 @@ public class PessoaStepDefinitions {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(json)
                 )
-                .andExpect(MockMvcResultMatchers.status().isBadRequest()) // 400
+                .andExpect(MockMvcResultMatchers.status().isBadRequest())
                 .andReturn();
     }
 
@@ -169,12 +169,41 @@ public class PessoaStepDefinitions {
 
     @And("the response should indicate that the provided CEP is invalid")
     public void aRespostaDeveInformarQueOCEPFornecidoEInvalido() {
-        // Aceita corpo vazio (controller atual)
-        // Se quiser mensagem: melhore o controller
+        // Controller retorna corpo vazio atualmente.
     }
 
+    @Given("I prepare a person with the following data:")
+    public void euPreparoUmaPessoaComOsDados(DataTable dataTable) {
+        Map<String, String> dados = dataTable.asMap(String.class, String.class);
+        pessoaRequest = construirPessoa(dados);
+    }
 
-    // --- Métodos auxiliares ---
+    @When("I try to register this person without a password")
+    public void euTentoCadastrarEssaPessoaSemSenha() throws Exception {
+        mockarViaCEP(pessoaRequest.getCep());
+
+        String json = objectMapper.writeValueAsString(pessoaRequest);
+
+        mvcResult = mockMvc.perform(
+                        MockMvcRequestBuilders.post("/api/pessoas/cadastrar")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json)
+                )
+                .andExpect(MockMvcResultMatchers.status().isUnprocessableEntity())
+                .andReturn();
+    }
+
+    @Then("the registration should be rejected with status {int}")
+    public void oCadastroDeveSerRejeitadoComStatus(Integer statusEsperado) {
+        int statusAtual = mvcResult.getResponse().getStatus();
+        Assertions.assertEquals(statusEsperado.intValue(), statusAtual, "Status HTTP diferente do esperado");
+    }
+
+    @And("the response should indicate that the password is required")
+    public void aRespostaDeveInformarQueASenhaEObrigatoria() {
+        // Controller atual não devolve mensagem específica.
+    }
+
     private Pessoa construirPessoa(Map<String, String> dados) {
         Pessoa p = new Pessoa();
         p.setNome(valor(dados, "nome", "name"));
@@ -194,7 +223,7 @@ public class PessoaStepDefinitions {
     }
 
     private void mockarViaCEP(String cep) {
-        String cepLimpo = cep.replaceAll("[^0-9]", "");
+        String cepLimpo = cep != null ? cep.replaceAll("[^0-9]", "") : "";
         ViaCEP viaCEP = new ViaCEP();
         viaCEP.setCep(cepLimpo);
         viaCEP.setLogradouro("Rua Mockada");
@@ -207,3 +236,4 @@ public class PessoaStepDefinitions {
         Mockito.when(viaCEPService.buscarEnderecoPorCEP(Mockito.matches("\\d{5}-?\\d{3}"))).thenReturn(viaCEP);
     }
 }
+

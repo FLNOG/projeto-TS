@@ -13,7 +13,7 @@ import org.junit.platform.suite.api.Suite;
 @SelectClasspathResource("features/pessoa.feature")
 @ConfigurationParameter(
     key = GLUE_PROPERTY_NAME,
-    value = "com.testesoftware.cadastro.stepdefinitions"
+    value = "com.testesoftware.cadastro.stepdefinitions.pessoa"
 )
 @ConfigurationParameter(
     key = PLUGIN_PROPERTY_NAME,
